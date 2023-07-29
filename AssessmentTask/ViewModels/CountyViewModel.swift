@@ -7,10 +7,28 @@
 
 import Foundation
 
+enum CountryError: Error {
+    case custom(error: Error)
+    case failedToDecode
+    case invalidStatusCode
+    
+    var errorDescription: String {
+        switch self {
+        case .custom(let error):
+            return error.localizedDescription
+        case .failedToDecode:
+            return "Failed to decode response"
+        case .invalidStatusCode:
+            return "Invalid status code"
+        }
+    }
+}
+
 protocol CountryViewModelProtocol: AnyObject {
     var countries: [CountryModelToPopulate] { get }
     var didDataLoad: (() -> Void)? { get set }
     var didErrorOccur: ((Error) -> Void)? { get set }
+    var searchText: String { get set }
     
     func fetchData()
 }
@@ -20,6 +38,15 @@ class CountryViewModel: CountryViewModelProtocol {
     var countries: [CountryModelToPopulate] = []
     var didDataLoad: (() -> Void)?
     var didErrorOccur: ((Error) -> Void)?
+    private var allCountries: [CountryModelToPopulate] = []
+    
+    var searchText: String = "" {
+        didSet {
+            Task {
+                await filterCountries()
+            }
+        }
+    }
     
     func fetchData() {
         Task{
@@ -28,8 +55,9 @@ class CountryViewModel: CountryViewModelProtocol {
             case let .success(countries):
                 let populatedCoutries = countries.map { CountryModelToPopulate(country: $0.name, capital: $0.capital, region: $0.region.rawValue, code: $0.code)
                 }
+                self.allCountries = populatedCoutries
+                await filterCountries()
                 await MainActor.run {
-                    self.countries = populatedCoutries
                     self.didDataLoad?()
                 }
             case let .failure(error):
@@ -55,21 +83,23 @@ class CountryViewModel: CountryViewModelProtocol {
         }
     }
     
-}
-
-enum CountryError: Error {
-    case custom(error: Error)
-    case failedToDecode
-    case invalidStatusCode
-    
-    var errorDescription: String {
-        switch self {
-        case .custom(let error):
-            return error.localizedDescription
-        case .failedToDecode:
-            return "Failed to decode response"
-        case .invalidStatusCode:
-            return "Invalid status code"
+    private func filterCountries() async {
+        if !searchText.isEmpty {
+            let filtered = allCountries.filter { country in
+                country.country.localizedCaseInsensitiveContains(searchText) ||
+                country.capital.localizedCaseInsensitiveContains(searchText)
+            }
+            countries = filtered
+            await MainActor.run(body: {
+                didDataLoad?()
+            })
+        } else {
+            countries = allCountries
+            await MainActor.run(body: {
+                didDataLoad?()
+            })
         }
     }
 }
+
+

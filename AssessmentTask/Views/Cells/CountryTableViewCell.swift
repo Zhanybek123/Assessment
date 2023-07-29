@@ -67,6 +67,12 @@ class CountryTableViewCell: UITableViewCell {
             countryCapitalLabel.widthAnchor.constraint(equalToConstant: bounds.width / 3),
             countryCapitalLabel.heightAnchor.constraint(equalToConstant: bounds.height / 2),
         ])
+        
+        let fontMetrics = UIFontMetrics(forTextStyle: .body)
+        countryNameLabel.font = fontMetrics.scaledFont(for: UIFont.preferredFont(forTextStyle: .headline))
+        countryRegionLabel.font = fontMetrics.scaledFont(for: UIFont.preferredFont(forTextStyle: .subheadline))
+        countryCodeLabel.font = fontMetrics.scaledFont(for: UIFont.preferredFont(forTextStyle: .body))
+        countryCapitalLabel.font = fontMetrics.scaledFont(for: UIFont.preferredFont(forTextStyle: .subheadline))
     }
     
     func configureProperties(with model: CountryModelToPopulate) {
@@ -74,7 +80,7 @@ class CountryTableViewCell: UITableViewCell {
         self.countryCapitalLabel.text = model.capital
         self.countryRegionLabel.text = model.region
         self.countryCodeLabel.text = model.code
-    }
+    }   
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)

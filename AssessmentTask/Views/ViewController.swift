@@ -42,11 +42,13 @@ class ViewController: UIViewController {
         viewModel.didDataLoad = { [weak self] in
             self?.tableView.reloadData()
         }
-        viewModel.didErrorOccur = { [weak self] error in
-//            TODO: Handle Error
+        viewModel.didErrorOccur = { error in
+            //            TODO: Handle Error
         }
         
         viewModel.fetchData()
+        
+        setupSearchController()
     }
     
     // A little bit of glitter :)
@@ -54,11 +56,21 @@ class ViewController: UIViewController {
         cell.alpha = 0
         
         UIView.animate(
-            withDuration: 0.9,
-            delay: 0.05 * Double(indexPath.row),
+            withDuration: 0.1,
+            delay: 0.001 * Double(indexPath.row),
             animations: {
                 cell.alpha = 1
             })
+    }
+    
+    private let searchController = UISearchController(searchResultsController: nil)
+    
+    private func setupSearchController() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search by name or capital"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
 }
 
@@ -83,3 +95,10 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+extension ViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        if let text = searchController.searchBar.text {
+            viewModel.searchText = text
+        }
+    }
+}
